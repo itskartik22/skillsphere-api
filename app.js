@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const morgan = require("morgan");
+// const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
@@ -9,10 +9,10 @@ const AppError = require("./utils/appError");
 //Create express app
 const app = express();
 
-//logging requests
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+// //logging requests
+// if (process.env.NODE_ENV === "development") {
+//   app.use(morgan("dev"));
+// }
 
 //Middle ware
 app.use(cors());
