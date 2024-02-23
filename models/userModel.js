@@ -48,10 +48,12 @@ const userSchema = new mongoose.Schema(
       contact: {
         type: Number,
       },
+      address: String,
       country: String,
-      city: String,
-      DateOfBirth: Date,
-      Gender: String,
+      dateOfBirth: Date,
+      gender: String,
+      coursePersuing: String,
+      college: String,
       // More profile details (e.g., address, contact information, etc.)
     },
   },

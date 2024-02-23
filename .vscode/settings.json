@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/e8110016-d5d8-4c34-853f-14759e2c3aee/resourceGroups/skillsphere-api/providers/Microsoft.Web/sites/skillsphere-api",
+    "appService.deploySubpath": "."
+}

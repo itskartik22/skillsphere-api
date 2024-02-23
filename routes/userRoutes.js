@@ -43,6 +43,10 @@ Router.route("/enroll-courses").patch(
   userController.deleteAllCartCourses,
   userController.addMultipleCoursesToEnrolled
 );
+
+Router.route("/user-profile")
+  .get(authController.protect, userController.getUserInformation)
+  .patch(authController.protect, userController.updateUserInformation);
 // Router.route("/:id")
 //   .get(userController.getUser)
 //   .patch(userController.updateUser)

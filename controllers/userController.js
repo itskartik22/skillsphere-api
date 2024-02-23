@@ -1,6 +1,7 @@
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("./../models/userModel");
+const Course = require("./../models/courseModel");
 
 exports.getAllUser = catchAsync(async (req, res, next) => {
   const data = await User.find();
@@ -33,7 +34,55 @@ exports.createUser = async (req, res, next) => {
     });
   }
 };
-
+exports.getUserInformation = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    const userInfo = req.body;
+    const data = await User.findById(user._id).select(
+      "-password -role -_id -createdAt -updatedAt -coursesEnrolled -cartCourses -__v"
+    );
+    res.status(201).json({
+      status: "success",
+      data,
+    });
+  } catch (err) {
+    next(new AppError("Information Fetching Failed", 400));
+  }
+});
+exports.updateUserInformation = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    const userNewInfo = req.body;
+    await User.findByIdAndUpdate(user._id, {
+      profile: {
+        firstName: userNewInfo.firstName,
+        lastName: userNewInfo.lastName,
+        gender: userNewInfo.gender,
+        contact: userNewInfo.contact,
+        country: userNewInfo.country,
+        address: userNewInfo.address,
+        college: userNewInfo.college,
+        coursePersuing: userNewInfo.coursePersuing,
+        dateOfBirth: userNewInfo.dateOfBirth,
+      },
+    });
+    const data = await User.findById(user._id).select(
+      "-password -role -_id -createdAt -updatedAt -coursesEnrolled -cartCourses -__v"
+    );
+    // console.log(data);
+    res.status(200).json({
+      status: "success",
+      data,
+    });
+  } catch (err) {
+    // res.status(err.statusCode).json({
+    //   status: err.status,
+    //   message: err.message,
+    // });
+    console.log(err);
+    next(new AppError("Information Updation Failed.", 400));
+  }
+});
 exports.deleteUser = async (req, res, next) => {
   // const data = User.create(req.)
   res.send("User deleted");
@@ -98,6 +147,9 @@ exports.addCourseToEnrolled = catchAsync(async (req, res, next) => {
   const courseId = req.params.courseId;
   await User.findByIdAndUpdate(user._id, {
     $addToSet: { coursesEnrolled: courseId },
+  });
+  await Course.findByIdAndUpdate(courseId, {
+    $addToSet: { enrolledBy: user._id },
   });
   res.status(200).json({
     status: 200,
