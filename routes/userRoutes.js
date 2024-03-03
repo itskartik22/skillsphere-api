@@ -1,11 +1,13 @@
 const Router = require("express").Router();
-const { signup, login, protect } = require("../controllers/authController");
 const userController = require("./../controllers/userController");
 const authController = require("../controllers/authController");
+const multer = require("multer");
+const upload = multer();
 
-Router.post("/signup", signup);
-Router.post("/login", login);
-
+Router.post("/signup", authController.signup);
+Router.post("/login", authController.login);
+Router.post("/forgotUserPassword", authController.forgetUserPassword);
+Router.post("/resetUserPassword", authController.resetUserPsssword);
 Router.route("/")
   .get(
     authController.protect,
@@ -18,6 +20,12 @@ Router.route("/")
     authController.restrictedTo("admin"),
     userController.deleteUser
   );
+Router.post(
+  "/upload",
+  authController.protect,
+  upload.single("image"),
+  userController.uploadProfilePhoto
+);
 //User course managing route
 Router.route("/cart-course/:courseId")
   .patch(authController.protect, userController.addCourseInCart)

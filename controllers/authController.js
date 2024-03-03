@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const AppError = require("./../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const sendEmail = require("../utils/email");
 
 const signToken = async (id) => {
   const token = await jwt.sign({ id }, process.env.SECRET_KEY, {
@@ -101,4 +102,50 @@ exports.restrictedTo = (...roles) => {
     }
     next();
   };
+};
+
+exports.forgetUserPassword = async (req, res, next) => {
+  //Check user presence
+  if (!req.body.email) {
+    return next(new AppError("You are not provided any email!", 404));
+  }
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new AppError("User not found!", 404));
+  }
+  //created password reset token
+  const resetToken = await user.createResetPasswordToken();
+  user.save({ validateBeforeSave: false });
+
+  //send mail to user
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/users/resetUserPassword/${resetToken}`;
+  const message = `Forgot your Password. You can rest your password throught the given url : ${resetURL}. If this is not you then ignore it.`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password reset URL (expires in 10 minute)",
+      message,
+    });
+
+    res.status(200).json({
+      status: "succes",
+      message: "You can reset your password using URL sent to your email.",
+    });
+  } catch (error) {
+    user.passwordResetExpires = undefined;
+    user.passwordResetToken = undefined;
+    user.save({ validateBeforeSave: false });
+    next(
+      new AppError(
+        "Failed to create reset password option. Please Try again later.",
+        500
+      )
+    );
+  }
+};
+
+exports.resetUserPsssword = (req, res, next) => {
+  
 };

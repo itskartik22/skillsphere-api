@@ -2,6 +2,7 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("./../models/userModel");
 const Course = require("./../models/courseModel");
+const { uploadImageToBlob } = require("../utils/blobStorageHandler");
 
 exports.getAllUser = catchAsync(async (req, res, next) => {
   const data = await User.find();
@@ -39,7 +40,7 @@ exports.getUserInformation = catchAsync(async (req, res, next) => {
     const user = req.user;
     const userInfo = req.body;
     const data = await User.findById(user._id).select(
-      "-password -role -_id -createdAt -updatedAt -coursesEnrolled -cartCourses -__v"
+      "-password -role -_id -createdAt -updatedAt -coursesEnrolled -cartCourses -__v -passwordChangedAt -passwordResetToken -passwordResetExpires"
     );
     res.status(201).json({
       status: "success",
@@ -83,8 +84,30 @@ exports.updateUserInformation = catchAsync(async (req, res, next) => {
     next(new AppError("Information Updation Failed.", 400));
   }
 });
+
+//Upload Profile Photo
+exports.uploadProfilePhoto = async (req, res, next) => {
+  try {
+    const userInfo = req.user;
+    const containerName = "profile-photo";
+    const blobName = `pp-${userInfo._id}.${req.file.mimetype.split("/")[1]}`;
+    const buffer = req.file.buffer;
+    const imgUrl = await uploadImageToBlob(containerName, blobName, buffer);
+    console.log(imgUrl)
+    await User.findByIdAndUpdate(userInfo._id, {
+      profilePhoto: imgUrl,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Profile photo uploaded successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error uploading image");
+  }
+};
 exports.deleteUser = async (req, res, next) => {
-  // const data = User.create(req.)
   res.send("User deleted");
   next();
 };

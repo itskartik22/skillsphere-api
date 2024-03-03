@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const { Schema } = mongoose;
 
 const userSchema = new mongoose.Schema(
@@ -35,6 +36,11 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
+    profilePhoto: {
+      type: String,
+      default:
+        "https://skillspherestorage.blob.core.windows.net/profile-photo/skillsphere-pp-default.png",
+    },
     // Additional fields (customizable based on your requirements):
     profile: {
       firstName: {
@@ -56,6 +62,9 @@ const userSchema = new mongoose.Schema(
       college: String,
       // More profile details (e.g., address, contact information, etc.)
     },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   { timestamps: true }
 );
@@ -74,6 +83,20 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   return false;
 };
+
+userSchema.methods.createResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  console.log(resetToken, this.passwordResetToken);
+  return resetToken;
+};
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
