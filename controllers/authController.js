@@ -6,6 +6,7 @@ const AppError = require("./../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const sendEmail = require("../utils/email");
 
+//Token Generation
 const signToken = async (id) => {
   const token = await jwt.sign({ id }, process.env.SECRET_KEY, {
     expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
@@ -13,6 +14,7 @@ const signToken = async (id) => {
   return token;
 };
 
+//Signup
 exports.signup = catchAsync(async (req, res, next) => {
   const userDetail = { ...req.body };
   console.log(userDetail);
@@ -20,6 +22,13 @@ exports.signup = catchAsync(async (req, res, next) => {
   if (existingUser) return next(new AppError("User already exist..", 400));
   const newUser = await User.create(req.body);
   const token = await signToken(newUser._id);
+  res.cookie("jwt", token, {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    secure: false,
+    httpOnly: true,
+  });
   res.status(201).json({
     status: "success",
     userInfo: {
@@ -27,13 +36,12 @@ exports.signup = catchAsync(async (req, res, next) => {
       email: newUser.email,
       role: newUser.role,
     },
-    token,
   });
 });
 
+//Login
 exports.login = catchAsync(async (req, res, next) => {
   const userDetail = { ...req.body };
-  console.log(userDetail);
   const user = await User.findOne({ email: userDetail.email });
   if (!user) {
     return next(new AppError("Invalid email or password", 401));
@@ -43,6 +51,15 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid email or password", 401));
   }
   const token = await signToken(user._id);
+
+  res.cookie("jwt", token, {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    secure: false,
+    httpOnly: true,
+  });
+
   res.status(200).json({
     status: "success",
     userInfo: {
@@ -50,49 +67,62 @@ exports.login = catchAsync(async (req, res, next) => {
       email: user.email,
       role: user.role,
     },
-    token,
   });
 });
 
+//Logout
+exports.logout = async (req, res, next) => {
+  console.log("logout");
+  try {
+    res.clearCookie("jwt");
+    res.status(200).json({
+      status: "success",
+      message: "You are logged out successfully",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+//Protect Route Controller
 exports.protect = catchAsync(async (req, res, next) => {
-  //1) Check token and check of it's there
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  try {
+    //1) Check token and check of it's there
+    let token = req.cookies.jwt || req.headers.authorization?.split(" ")[1];
+
     if (!token) {
       return next(new AppError("Token not found", 401));
     }
-  } else {
-    return next(new AppError("Token not found", 401));
+    //2)Verification token
+    const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
+    //3) Check if user still exists
+    const currUser = await User.findById(decoded.id).select("-password");
+    if (!currUser) {
+      return next(new AppError("Invalid Token", 401));
+    }
+    //4) Check if user changed password after jwt toekn was issue
+    const checkUpdate = currUser.changedPasswordAfter(decoded.iat);
+    if (checkUpdate) {
+      throw new AppError(
+        "Password is changed after token generated. Login again!",
+        401
+      );
+    }
+    //5) GrantAccess to protectect route
+    req.user = {
+      _id: currUser._id,
+      email: currUser.email,
+      username: currUser.username,
+      role: currUser.role,
+    };
+    next();
+  } catch (error) {
+    console.log(error);
+    res.clearCookie("jwt");
+    next(new AppError("Session Expired", 401));
   }
-  //2)Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
-  //3) Check if user still exists
-  const currUser = await User.findById(decoded.id).select("-password");
-  if (!currUser) {
-    return next(new AppError("User no more exist. Please login again!", 401));
-  }
-  //4) Check if user changed password after jwt toekn was issue
-  const checkUpdate = currUser.changedPasswordAfter(decoded.iat);
-  if (checkUpdate) {
-    throw new AppError(
-      "Password is changed after token generated. Login again!",
-      401
-    );
-  }
-  //5) GrantAccess to protectect route
-  req.user = {
-    _id: currUser._id,
-    email: currUser.email,
-    username: currUser.username,
-    role: currUser.role,
-  };
-  next();
 });
-
+//Restrict Route Controller
 exports.restrictedTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.userRole)) {
@@ -104,6 +134,7 @@ exports.restrictedTo = (...roles) => {
   };
 };
 
+//Forget Password
 exports.forgetUserPassword = async (req, res, next) => {
   //Check user presence
   if (!req.body.email) {
@@ -146,6 +177,4 @@ exports.forgetUserPassword = async (req, res, next) => {
   }
 };
 
-exports.resetUserPsssword = (req, res, next) => {
-  
-};
+exports.resetUserPsssword = (req, res, next) => {};

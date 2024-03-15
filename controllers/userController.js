@@ -1,3 +1,4 @@
+const sharp = require('sharp');
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("./../models/userModel");
@@ -90,9 +91,10 @@ exports.uploadProfilePhoto = async (req, res, next) => {
   try {
     const userInfo = req.user;
     const containerName = "profile-photo";
+    const resizeBuffer = await sharp(req.file.buffer).resize(500, 500).toFormat('jpeg').jpeg({quality: 90}).toBuffer();
     const blobName = `pp-${userInfo._id}.${req.file.mimetype.split("/")[1]}`;
     const buffer = req.file.buffer;
-    const imgUrl = await uploadImageToBlob(containerName, blobName, buffer);
+    const imgUrl = await uploadImageToBlob(containerName, blobName, resizeBuffer);
     console.log(imgUrl)
     await User.findByIdAndUpdate(userInfo._id, {
       profilePhoto: imgUrl,

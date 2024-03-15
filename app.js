@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 // const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -8,14 +9,20 @@ const globalErrorHandler = require("./controllers/errorController");
 const AppError = require("./utils/appError");
 //Create express app
 const app = express();
+app.use(cookieParser());
 
 // //logging requests
 // if (process.env.NODE_ENV === "development") {
 //   app.use(morgan("dev"));
 // }
 
-//Middle ware
-app.use(cors());
+//Middleware
+app.use(cors(
+  {
+    origin: "http://localhost:3001",
+    credentials: true,
+  }
+));
 app.use(express.json());
 
 //Routes Middleware
