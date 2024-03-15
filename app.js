@@ -17,12 +17,13 @@ app.use(cookieParser());
 // }
 
 //Middleware
-app.use(cors(
-  {
-    origin: "http://localhost:3001",
+app.use(
+  cors({
+    // origin: "http://localhost:3001",
+    origin: "https://skillsphere-liard.vercel.app",
     credentials: true,
-  }
-));
+  })
+);
 app.use(express.json());
 
 //Routes Middleware
