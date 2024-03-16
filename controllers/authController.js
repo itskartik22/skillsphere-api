@@ -25,7 +25,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     expires: new Date(
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    sameSite : "none",
+    sameSite: "none",
     secure: true,
     httpOnly: true,
   });
@@ -56,11 +56,10 @@ exports.login = catchAsync(async (req, res, next) => {
     expires: new Date(
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    sameSite : "none",
+    sameSite: "none",
     secure: true,
     httpOnly: true,
   });
-
   res.status(200).json({
     status: "success",
     userInfo: {
@@ -74,13 +73,12 @@ exports.login = catchAsync(async (req, res, next) => {
 //Logout
 exports.logout = async (req, res, next) => {
   try {
-    res.clearCookie("jwt");
+    res.clearCookie("jwt", { path: "/", secure: true, sameSite: "none" });
     res.status(200).json({
       status: "success",
       message: "You are logged out successfully",
     });
   } catch (error) {
-    console.log(error);
     next(new AppError("Failed to logout", 500));
   }
 };
@@ -121,8 +119,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     };
     next();
   } catch (error) {
-    console.log(error);
-    res.clearCookie("jwt");
+    res.clearCookie("jwt", { path: "/", secure: true, sameSite: "none" });
     return next(new AppError("Session Expired", 401));
   }
 });
