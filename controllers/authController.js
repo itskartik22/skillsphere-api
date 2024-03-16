@@ -26,7 +26,7 @@ exports.signup = catchAsync(async (req, res, next) => {
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     sameSite : "none",
-    secure: false,
+    secure: true,
     httpOnly: true,
   });
   res.status(201).json({
@@ -57,7 +57,7 @@ exports.login = catchAsync(async (req, res, next) => {
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     sameSite : "none",
-    secure: false,
+    secure: true,
     httpOnly: true,
   });
 
