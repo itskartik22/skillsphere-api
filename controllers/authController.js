@@ -41,39 +41,33 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 //Login
 exports.login = catchAsync(async (req, res, next) => {
-try {
-  console.log(req.body);
-    const userDetail = { ...req.body };
-    const user = await User.findOne({ email: userDetail.email });
-    if (!user) {
-      return next(new AppError("Invalid email or password", 401));
-    }
-    const isValid = await bcrypt.compare(userDetail.password, user.password);
-    if (!isValid) {
-      return next(new AppError("Invalid email or password", 401));
-    }
-    const token = await signToken(user._id);
-  
-    res.cookie("jwt", token, {
-      expires: new Date(
-        Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-      ),
-      secure: false,
-      httpOnly: true,
-    });
-  
-    res.status(200).json({
-      status: "success",
-      userInfo: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-    });
-} catch (error) {
-  console.log(error);
-  next(new AppError("Something went wrong", 500))
-}
+  const userDetail = { ...req.body };
+  const user = await User.findOne({ email: userDetail.email });
+  if (!user) {
+    return next(new AppError("Invalid email or password", 401));
+  }
+  const isValid = await bcrypt.compare(userDetail.password, user.password);
+  if (!isValid) {
+    return next(new AppError("Invalid email or password", 401));
+  }
+  const token = await signToken(user._id);
+
+  res.cookie("jwt", token, {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    secure: false,
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    status: "success",
+    userInfo: {
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  });
 });
 
 //Logout
