@@ -37,7 +37,6 @@ exports.createUser = async (req, res, next) => {
   }
 };
 exports.getUserInformation = catchAsync(async (req, res, next) => {
-  console.log("reached user info");
   try {
     const user = req.user;
     const userInfo = req.body;
@@ -144,7 +143,6 @@ exports.deleteCourseFromCart = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllCartCourses = catchAsync(async (req, res, next) => {
-  console.log("reached cart courses");
   const user = req.user;
   const data = await User.findById(user._id).select("username").populate({
     path: "cartCourses",
@@ -196,7 +194,6 @@ exports.addMultipleCoursesToEnrolled = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllEnrolledCourses = catchAsync(async (req, res, next) => {
-  console.log("reached to enrolled courses");
   const user = req.user;
   const data = await User.findById(user._id).select("username").populate({
     path: "coursesEnrolled",

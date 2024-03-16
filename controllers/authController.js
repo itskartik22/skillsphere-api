@@ -88,20 +88,19 @@ exports.protect = catchAsync(async (req, res, next) => {
   try {
     //1) Check token and check of it's there
     let token = req.cookies?.jwt || req.headers.authorization?.split(" ")[1];
-    console.log(token);
     if (!token) {
       return next(new AppError("Token not found", 401));
     }
-    console.log("token check done");
+    
     //2)Verification token
     const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
-    console.log("verification done");
+
     //3) Check if user still exists
     const currUser = await User.findById(decoded.id).select("-password");
     if (!currUser) {
       return next(new AppError("Invalid Token", 401));
     }
-    console.log("user check done", currUser);
+
     //4) Check if user changed password after jwt toekn was issue
     const checkUpdate = currUser.changedPasswordAfter(decoded.iat);
     if (checkUpdate) {
