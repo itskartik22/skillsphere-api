@@ -17,7 +17,6 @@ const signToken = async (id) => {
 //Signup
 exports.signup = catchAsync(async (req, res, next) => {
   const userDetail = { ...req.body };
-  console.log(userDetail);
   const existingUser = await User.findOne({ email: userDetail.email });
   if (existingUser) return next(new AppError("User already exist..", 400));
   const newUser = await User.create(req.body);
@@ -72,7 +71,6 @@ exports.login = catchAsync(async (req, res, next) => {
 
 //Logout
 exports.logout = async (req, res, next) => {
-  console.log("logout");
   try {
     res.clearCookie("jwt");
     res.status(200).json({
@@ -80,7 +78,7 @@ exports.logout = async (req, res, next) => {
       message: "You are logged out successfully",
     });
   } catch (error) {
-    console.log(error);
+    next(new AppError("Failed to logout", 500));
   }
 };
 
