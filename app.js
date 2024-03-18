@@ -19,8 +19,7 @@ app.use(cookieParser());
 //Middleware
 app.use(
   cors({
-    // origin: "http://localhost:3001",
-    origin: "https://skillsphere-liard.vercel.app",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );

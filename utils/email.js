@@ -1,22 +1,31 @@
 const nodemailer = require("nodemailer");
+const fs = require('fs');
+const path = require('path');
+
+const loadTemplate = (url) => {
+  // const templatePath = path.resolve(__dirname, "../utils/emailTemplate.html");
+  let template = fs.readFileSync(`${__dirname}/../utils/emailTemplate.html`, {encoding: 'utf-8'});
+  template = template.replace("YOUR_PASSWORD_RESET_LINK", url);
+  return template;
+};
 
 const sendEmail = async (option) => {
-  //create transpoter
+  // create transpoter
   const transpoter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
+    service: "SendGrid",
     auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
+      user: process.env.SENDGRID_USERNAME,
+      pass: process.env.SENDGRID_PASSWORD,
     },
   });
 
   //create mail options
   const mailOptions = {
-    from: "Kartik Thakur <kartikarya@gmail.com>",
+    from: "Kartik Thakur <kartik.21106107027@mitmuzaffarpur.org>",
     to: option.email,
     subject: option.subject,
-    text: option.message,
+    html: loadTemplate(option.url)
+    // text: option.message
   };
 
   //send mail

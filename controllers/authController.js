@@ -1,4 +1,5 @@
 const { promisify } = require("util");
+const crypto = require("crypto");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -41,17 +42,19 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 //Login
 exports.login = catchAsync(async (req, res, next) => {
+  //Check if email and password is provided or not
   const userDetail = { ...req.body };
   const user = await User.findOne({ email: userDetail.email });
   if (!user) {
     return next(new AppError("Invalid email or password", 401));
   }
+  //Check if password is correct or not
   const isValid = await bcrypt.compare(userDetail.password, user.password);
   if (!isValid) {
     return next(new AppError("Invalid email or password", 401));
   }
   const token = await signToken(user._id);
-
+  //Send token in cookie
   res.cookie("jwt", token, {
     expires: new Date(
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -91,7 +94,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     if (!token) {
       return next(new AppError("Token not found", 401));
     }
-    
+
     //2)Verification token
     const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
 
@@ -146,28 +149,38 @@ exports.forgetUserPassword = async (req, res, next) => {
   }
   //created password reset token
   const resetToken = await user.createResetPasswordToken();
-  user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
 
   //send mail to user
-  const resetURL = `${req.protocol}://${req.get(
-    "host"
-  )}/api/v1/users/resetUserPassword/${resetToken}`;
-  const message = `Forgot your Password. You can rest your password throught the given url : ${resetURL}. If this is not you then ignore it.`;
+  const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+  const message = 'Reset your password using this link sent on your email. URL expires in 10 minutes.';
+
+  //Send response in development mode
+  if (process.env.NODE_ENV === "development") {
+    return res.status(200).json({
+      status: "success",
+      resetURL,
+      message,
+    });
+  }
+  //Send response in production mode
   try {
     await sendEmail({
       email: user.email,
+      url: resetURL,
       subject: "Password reset URL (expires in 10 minute)",
       message,
     });
 
     res.status(200).json({
-      status: "succes",
+      status: "success",
       message: "You can reset your password using URL sent to your email.",
     });
   } catch (error) {
+    //If any error occured then reset the token and expires
     user.passwordResetExpires = undefined;
     user.passwordResetToken = undefined;
-    user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
     next(
       new AppError(
         "Failed to create reset password option. Please Try again later.",
@@ -177,4 +190,45 @@ exports.forgetUserPassword = async (req, res, next) => {
   }
 };
 
-exports.resetUserPsssword = (req, res, next) => {};
+exports.resetUserPsssword = async (req, res, next) => {
+  try {
+    const token = req.params.resetToken;
+    //Check if token received or not
+    if (!token) return next(new AppError("Invalid token", 400));
+
+    //Check if token is valid or not
+    const hashedToken = await crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+    if (!user) {
+      return next(new AppError("Token is invalid or expired", 400));
+    }
+
+    //Update password
+    const newPasword = req.body.auth.password;
+    user.password = newPasword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    //send response
+    res.status(200).json({
+      status: "success",
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    //Response if any error occured
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to reset password. Try again later!",
+    });
+  }
+};
