@@ -153,7 +153,8 @@ exports.forgetUserPassword = async (req, res, next) => {
 
   //send mail to user
   const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-  const message = 'Reset your password using this link sent on your email. URL expires in 10 minutes.';
+  const message =
+    "Reset your password using this link sent on your email. URL expires in 10 minutes.";
 
   //Send response in development mode
   if (process.env.NODE_ENV === "development") {
@@ -229,6 +230,35 @@ exports.resetUserPsssword = async (req, res, next) => {
     res.status(500).json({
       status: "fail",
       message: "Failed to reset password. Try again later!",
+    });
+  }
+};
+
+//Change Password
+exports.changeUserPsssword = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user._id,
+    });
+    if (!user) {
+      return next(new AppError("User not found!", 400));
+    }
+
+    //Update password
+    const newPasword = req.body.auth.password;
+    user.password = newPasword;
+    await user.save({ validateBeforeSave: false });
+
+    //send response
+    res.status(200).json({
+      status: "success",
+      message: "Password change successfully",
+    });
+  } catch (error) {
+    //Response if any error occured
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to change password. Try again later!",
     });
   }
 };

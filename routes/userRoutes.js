@@ -8,6 +8,7 @@ const upload = multer();
 Router.post("/signup", authController.signup);
 Router.post("/login", authController.login);
 Router.post("/logout", authController.protect, authController.logout);
+Router.post("/changeUserPassword", authController.protect, authController.changeUserPsssword);
 Router.post("/forgotUserPassword", authController.forgetUserPassword);
 Router.post("/resetUserPassword/:resetToken", authController.resetUserPsssword);
 
