@@ -32,9 +32,11 @@ app.use(express.json());
 const courseRoutes = require("./routes/courseRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const instructorRoutes = require("./routes/instructorRoutes");
 
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/instructors", instructorRoutes);
 
 //Route Error Handling
 app.all("*", (req, res, next) => {

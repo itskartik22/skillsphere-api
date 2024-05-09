@@ -11,7 +11,7 @@ const instructorSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: [true, "Instructor image is required."]
+        // required: [true, "Instructor image is required."]
     }
 });
 

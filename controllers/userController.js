@@ -216,11 +216,15 @@ exports.getAllEnrolledCourses = catchAsync(async (req, res, next) => {
   //   path: "coursesEnrolled",
   //   select: "-__v -enrolledBy -createdAt -updatedAt -password",
   // });
-
   const courses = await Enrollment.find({user: user._id}).populate({
     path: 'course',
-    select: '-__v -enrolledBy -createdAt -updatedAt -password'
+    select: '-__v -enrolledBy -createdAt -updatedAt -password',
+    populate: {
+      path: 'instructor',
+      select: '-__v'
+    }
   });
+  console.log(courses);
   res.status(200).json({
     status: "success",
     data: courses,
