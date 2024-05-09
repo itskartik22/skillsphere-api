@@ -4,6 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const User = require("./../models/userModel");
 const Course = require("./../models/courseModel");
 const { uploadImageToBlob } = require("../utils/blobStorageHandler");
+const Enrollment = require('../models/enrollementModel');
 
 exports.getAllUser = catchAsync(async (req, res, next) => {
   const data = await User.find();
@@ -170,23 +171,39 @@ exports.deleteAllCartCourses = catchAsync(async (req, res, next) => {
 exports.addCourseToEnrolled = catchAsync(async (req, res, next) => {
   const user = req.user;
   const courseId = req.params.courseId;
-  await User.findByIdAndUpdate(user._id, {
-    $addToSet: { coursesEnrolled: courseId },
+  // await User.findByIdAndUpdate(user._id, {
+  //   $addToSet: { coursesEnrolled: courseId },
+  // });
+  // await Course.findByIdAndUpdate(courseId, {
+  //   $addToSet: { enrolledBy: user._id },
+  // });
+
+  if(await Enrollment.findOne({course: courseId, user: user._id})){
+    return next(new AppError("Course is already enrolled", 400));
+  }
+  await Enrollment.create({
+    course: courseId,
+    user: user._id
   });
-  await Course.findByIdAndUpdate(courseId, {
-    $addToSet: { enrolledBy: user._id },
-  });
+
   res.status(200).json({
     status: 200,
     message: "Course Enrolled.",
   });
 });
+
 exports.addMultipleCoursesToEnrolled = catchAsync(async (req, res, next) => {
   const user = req.user;
   const courseIds = req.body?.courseIds;
-  await User.findByIdAndUpdate(user._id, {
-    $push: { coursesEnrolled: { $each: courseIds } },
+  courseIds.forEach(async (courseId) => {
+    await Enrollment.create({
+      course: courseId,
+      user: user._id
+    });
   });
+  // await User.findByIdAndUpdate(user._id, {
+  //   $push: { coursesEnrolled: { $each: courseIds } },
+  // });
   res.status(200).json({
     status: 200,
     message: "Courses Enrolled.",
@@ -195,12 +212,17 @@ exports.addMultipleCoursesToEnrolled = catchAsync(async (req, res, next) => {
 
 exports.getAllEnrolledCourses = catchAsync(async (req, res, next) => {
   const user = req.user;
-  const data = await User.findById(user._id).select("username").populate({
-    path: "coursesEnrolled",
-    select: "-__v -enrolledBy -createdAt -updatedAt -password",
+  // const data = await User.findById(user._id).select("username").populate({
+  //   path: "coursesEnrolled",
+  //   select: "-__v -enrolledBy -createdAt -updatedAt -password",
+  // });
+
+  const courses = await Enrollment.find({user: user._id}).populate({
+    path: 'course',
+    select: '-__v -enrolledBy -createdAt -updatedAt -password'
   });
   res.status(200).json({
     status: "success",
-    data: data,
+    data: courses,
   });
 });

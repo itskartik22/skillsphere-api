@@ -6,23 +6,47 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: [true, "Course name should be there!"],
     },
-    courseDescription: String,
+    description: String,
     instructor: {
-      instructorName: {
-        type: String,
-        required: [true, "Instructor detail required."],
-      },
-      instructorBio: {
-        type: String,
-        required: [true, "Instructor detail required."],
-      },
-    },
-    duration: {
-      startDate: { type: Date },
-      endDate: { type: Date },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Instructor",
     },
     coverImg: String,
     image: String,
+    category: {
+      type: String,
+      required: [true, "Category is required."],
+    },
+    chapters: [
+      {
+        id: Number,
+        name: {
+          type: String,
+          required: [true, "Chapter name is required."],
+        },
+        description: {
+          type: String,
+          required: [true, "Chapter description is required."],
+        },
+        video: {
+          type: String,
+          required: [true, "Video link is required."],
+        },
+      },
+    ],
+    attachments: [
+      {
+        id: Number,
+        name: {
+          type: String,
+          required: [true, "Attachment name is required."],
+        },
+        link: {
+          type: String,
+          required: [true, "Attachment link is required."],
+        },
+      },
+    ],
     discount: {
       type: Number,
       default: 0,
@@ -46,4 +70,5 @@ const courseSchema = new mongoose.Schema(
 );
 
 const Course = mongoose.model("Course", courseSchema);
+
 module.exports = Course;

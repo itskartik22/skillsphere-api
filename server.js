@@ -10,7 +10,9 @@ const DB = process.env.DATABASE_URL.replace(
 );
 
 mongoose
-  .connect(DB)
+  .connect(DB, {
+    dbName: process.env.DB_NAME,
+  })
   .then(() => {
     console.log("Database Connection Successful...");
   })
