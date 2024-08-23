@@ -1,4 +1,4 @@
-const Enrollement = require("../models/enrollementModel");
+const Enrollment = require("../models/enrollmentModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Course = require("../models/courseModel");
@@ -16,7 +16,7 @@ exports.enrollCourse = catchAsync(async (req, res, next) => {
   if (await Enrollment.findOne({ course: courseId, user: user._id })) {
     return next(new AppError("Course is already enrolled", 400));
   }
-  await Enrollement.create({
+  await Enrollment.create({
     course: courseId,
     user: userId,
   });
@@ -28,7 +28,7 @@ exports.enrollCourse = catchAsync(async (req, res, next) => {
 
 exports.getEnrolledCourses = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
-  console.log(userId)
+  console.log(userId);
   const enrolledCourses = await Enrollement.find({ user: userId }).populate(
     "course",
     "-__v"
@@ -42,7 +42,7 @@ exports.getEnrolledCourses = catchAsync(async (req, res, next) => {
 exports.checkEnrolled = catchAsync(async (req, res, next) => {
   const courseId = req.params.courseId;
   const userId = req.user._id;
-  const enrolledCourse = await Enrollement.findOne({
+  const enrolledCourse = await Enrollment.findOne({
     course: courseId,
     user: userId,
   });

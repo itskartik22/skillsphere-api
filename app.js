@@ -19,7 +19,7 @@ app.use(cookieParser());
 //Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: [process.env.CLIENT_URL1, process.env.CLIENT_URL2],
     credentials: true,
   })
 );
@@ -32,10 +32,15 @@ app.use(express.json());
 const courseRoutes = require("./routes/courseRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const instructorRoutes = require("./routes/instructorRoutes");
 
 app.use("/api/v1/courses", courseRoutes);
+// app.use("/api/v1/users", (req, res, next) => {
+//   res.send("Hello from server");
+// });
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/payment", orderRoutes);
 app.use("/api/v1/instructors", instructorRoutes);
 
 //Route Error Handling

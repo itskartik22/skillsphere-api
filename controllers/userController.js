@@ -1,25 +1,65 @@
-const sharp = require('sharp');
+const sharp = require("sharp");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("./../models/userModel");
 const Course = require("./../models/courseModel");
 const { uploadImageToBlob } = require("../utils/blobStorageHandler");
-const Enrollment = require('../models/enrollementModel');
+const Enrollment = require("../models/enrollmentModel");
 
 exports.getAllUser = catchAsync(async (req, res, next) => {
-  const data = await User.find();
-  const allUser = data.map((user) => {
-    return {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      profile: user.profile,
-    };
-  });
+  const data = await User.find().select("-password -__v -passwordChangedAt");
   res.status(200).json({
     status: "success",
-    data: allUser,
+    data,
   });
+});
+
+exports.deleteAllUsers = catchAsync(async (req, res, next) => {
+  await User.deleteMany();
+  res.status(200).json({
+    status: "success",
+    message: "All users deleted",
+  });
+});
+
+exports.getUserById = catchAsync(async (req, res, next) => {
+  console.log(req.params.id);
+  const data = await User.findById(req.params.id);
+  res.status(200).json({
+    status: "success",
+    data,
+  });
+});
+
+exports.deleteUserById = catchAsync(async (req, res, next) => {
+  await User.findByIdAndDelete(req.params.id);
+  res.status(200).json({
+    status: "success",
+    message: "User deleted",
+  });
+});
+
+exports.searchUser = catchAsync(async (req, res, next) => {
+  const { query } = req.query;
+  try {
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        // { _id: { $regex: query, $options: 'i'} },
+        { email: { $regex: query, $options: "i" } },
+      ],
+    }).select("-password -__v -passwordChangedAt");
+    res.status(200).json({
+      status: "success",
+      data: users,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
 });
 
 exports.createUser = async (req, res, next) => {
@@ -92,11 +132,19 @@ exports.uploadProfilePhoto = async (req, res, next) => {
   try {
     const userInfo = req.user;
     const containerName = "profile-photo";
-    const resizeBuffer = await sharp(req.file.buffer).resize(500, 500).toFormat('jpeg').jpeg({quality: 90}).toBuffer();
+    const resizeBuffer = await sharp(req.file.buffer)
+      .resize(500, 500)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toBuffer();
     const blobName = `pp-${userInfo._id}.${req.file.mimetype.split("/")[1]}`;
     const buffer = req.file.buffer;
-    const imgUrl = await uploadImageToBlob(containerName, blobName, resizeBuffer);
-    console.log(imgUrl)
+    const imgUrl = await uploadImageToBlob(
+      containerName,
+      blobName,
+      resizeBuffer
+    );
+    console.log(imgUrl);
     await User.findByIdAndUpdate(userInfo._id, {
       profilePhoto: imgUrl,
     });
@@ -178,12 +226,12 @@ exports.addCourseToEnrolled = catchAsync(async (req, res, next) => {
   //   $addToSet: { enrolledBy: user._id },
   // });
 
-  if(await Enrollment.findOne({course: courseId, user: user._id})){
+  if (await Enrollment.findOne({ course: courseId, user: user._id })) {
     return next(new AppError("Course is already enrolled", 400));
   }
   await Enrollment.create({
     course: courseId,
-    user: user._id
+    user: user._id,
   });
 
   res.status(200).json({
@@ -198,7 +246,7 @@ exports.addMultipleCoursesToEnrolled = catchAsync(async (req, res, next) => {
   courseIds.forEach(async (courseId) => {
     await Enrollment.create({
       course: courseId,
-      user: user._id
+      user: user._id,
     });
   });
   // await User.findByIdAndUpdate(user._id, {
@@ -211,22 +259,31 @@ exports.addMultipleCoursesToEnrolled = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllEnrolledCourses = catchAsync(async (req, res, next) => {
-  const user = req.user;
-  // const data = await User.findById(user._id).select("username").populate({
-  //   path: "coursesEnrolled",
-  //   select: "-__v -enrolledBy -createdAt -updatedAt -password",
-  // });
-  const courses = await Enrollment.find({user: user._id}).populate({
-    path: 'course',
-    select: '-__v -enrolledBy -createdAt -updatedAt -password',
-    populate: {
-      path: 'instructor',
-      select: '-__v'
-    }
-  });
-  console.log(courses);
-  res.status(200).json({
-    status: "success",
-    data: courses,
-  });
+  try {
+    const user = req.user;
+    // const data = await User.findById(user._id).select("username").populate({
+    //   path: "coursesEnrolled",
+    //   select: "-__v -enrolledBy -createdAt -updatedAt -password",m'
+    // });
+    const result = await Enrollment.find({ user: user._id }).populate({
+      path: "course",
+      select: "-__v -enrolledBy -createdAt -updatedAt -password",
+      populate: {
+        path: "instructor",
+        select: "-__v",
+      },
+    });
+
+    const courses = result.map((item) => item.course);
+    res.status(200).json({
+      status: "success",
+      data: courses,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
 });

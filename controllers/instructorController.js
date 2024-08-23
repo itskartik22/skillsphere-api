@@ -1,4 +1,5 @@
 const Instructor = require('../models/instructorModel');
+const catchAsync = require('../utils/catchAsync');
 
 exports.getAllInstructors = async (req, res) => {
     try {
@@ -49,3 +50,27 @@ exports.createInstructor = async (req, res) => {
         });
     }
 };
+
+exports.searchInstructor = catchAsync(async (req, res, next) => {
+    const { query } = req.query;
+    try {
+      const instructors = await Instructor.find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          // { _id: { $regex: query, $options: 'i'} },
+          { userid: { $regex: query, $options: "i" } },
+        ],
+      }).select("-__v -bio -image");
+
+      res.status(200).json({
+        status: "success",
+        data: instructors,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        status: "fail",
+        message: "Something went wrong!",
+      });
+    }
+  });

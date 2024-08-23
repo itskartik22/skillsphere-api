@@ -11,7 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@azure/storage-blob": "^12.17.0",
+    "aws-sdk": "^2.1670.0",
     "bcrypt": "^5.1.1",
+    "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -19,8 +21,13 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^6.9.10",
-    "sharp": "^0.33.2"
+    "razorpay": "^2.9.4",
+    "sharp": "^0.33.2",
+    "streamifier": "^0.1.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "morgan": "^1.10.0"

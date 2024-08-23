@@ -8,7 +8,11 @@ const upload = multer();
 Router.post("/signup", authController.signup);
 Router.post("/login", authController.login);
 Router.post("/logout", authController.protect, authController.logout);
-Router.post("/changeUserPassword", authController.protect, authController.changeUserPsssword);
+Router.post(
+  "/changeUserPassword",
+  authController.protect,
+  authController.changeUserPsssword
+);
 Router.post("/forgotUserPassword", authController.forgetUserPassword);
 Router.post("/resetUserPassword/:resetToken", authController.resetUserPsssword);
 
@@ -23,27 +27,50 @@ Router.route("/")
   .delete(
     authController.protect,
     authController.restrictedTo("admin"),
-    userController.deleteUser
+    userController.deleteAllUsers
   );
-Router.post(
-  "/upload",
+Router.route("/search").get(
   authController.protect,
-  upload.single("image"),
-  userController.uploadProfilePhoto
+  authController.restrictedTo("admin"),
+  userController.searchUser
 );
-//User course managing route
-Router.route("/cart-course/:courseId")
-  .patch(authController.protect, userController.addCourseInCart)
-  .delete(authController.protect, userController.deleteCourseFromCart);
-
-Router.route("/cart-courses")
-  .get(authController.protect, userController.getAllCartCourses)
-  .delete(authController.protect, userController.deleteAllCartCourses);
+Router.route("/user-profile")
+  .get(authController.protect, userController.getUserInformation)
+  .patch(authController.protect, userController.updateUserInformation);
 
 Router.route("/enrolled-courses").get(
   authController.protect,
   userController.getAllEnrolledCourses
 );
+
+Router.route("/cart-courses")
+  .get(authController.protect, userController.getAllCartCourses)
+  .delete(authController.protect, userController.deleteAllCartCourses);
+
+  Router.post(
+    "/upload",
+    authController.protect,
+    upload.single("image"),
+    userController.uploadProfilePhoto
+  );
+  
+Router.route("/:id")
+  .get(
+    authController.protect,
+    authController.restrictedTo("admin"),
+    userController.getUserById
+  )
+  .delete(
+    authController.protect,
+    authController.restrictedTo("admin"),
+    userController.deleteUserById
+  );
+
+//User course managing route
+Router.route("/cart-course/:courseId")
+  .patch(authController.protect, userController.addCourseInCart)
+  .delete(authController.protect, userController.deleteCourseFromCart);
+
 
 //route to enroll single course
 Router.route("/enroll-course/:courseId").patch(
@@ -57,9 +84,6 @@ Router.route("/enroll-courses").patch(
   userController.addMultipleCoursesToEnrolled
 );
 
-Router.route("/user-profile")
-  .get(authController.protect, userController.getUserInformation)
-  .patch(authController.protect, userController.updateUserInformation);
 // Router.route("/:id")
 //   .get(userController.getUser)
 //   .patch(userController.updateUser)

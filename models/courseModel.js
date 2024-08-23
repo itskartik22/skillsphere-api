@@ -11,26 +11,43 @@ const courseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Instructor",
     },
-    coverImg: String,
     image: String,
     category: {
       type: String,
       required: [true, "Category is required."],
     },
+    // chapters: [
+    //   {
+    //     id: Number,
+    //     name: {
+    //       type: String,
+    //       // required: [true, "Chapter name is required."],
+    //     },
+    //     description: {
+    //       type: String,
+    //       // required: [true, "Chapter description is required."],
+    //     },
+    //     video: {
+    //       type: String,
+    //       // required: [true, "Video link is required."],
+    //     },
+    //   },
+    // ],
+    status: Boolean,
     chapters: [
       {
         id: Number,
-        name: {
+        title: {
           type: String,
-          required: [true, "Chapter name is required."],
+          // required: [true, "Module name is required."],
         },
         description: {
           type: String,
-          required: [true, "Chapter description is required."],
+          // required: [true, "Module description is required."],
         },
-        video: {
+        videoUrl: {
           type: String,
-          required: [true, "Video link is required."],
+          // required: [true, "Video link is required."],
         },
       },
     ],
@@ -39,11 +56,11 @@ const courseSchema = new mongoose.Schema(
         id: Number,
         name: {
           type: String,
-          required: [true, "Attachment name is required."],
+          // required: [true, "Attachment name is required."],
         },
         link: {
           type: String,
-          required: [true, "Attachment link is required."],
+          // required: [true, "Attachment link is required."],
         },
       },
     ],
@@ -55,12 +72,16 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Price is required."],
     },
-    rating: Number,
+    rating: {
+      type: Number,
+      default: 0,
+    },
     review: [String],
     enrolledBy: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
+        // type: mongoose.Schema.Types.ObjectId,
+        //   ref: "User",
       },
     ],
   },

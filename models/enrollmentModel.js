@@ -11,6 +11,14 @@ const enrollmentSchema = new mongoose.Schema({
         ref: 'User',
         required: [true, 'User is required.']
     },
+    orderId: {
+        type: String,
+        required: [true, 'Order ID is required.']
+    },
+    paymentId: {
+        type: String,
+        required: [true, 'Payment ID is required.']
+    },
     enrolledAt: {
         type: Date,
         default: Date.now
